@@ -8,6 +8,7 @@
 !.config/nvim
 !.config/systemd
 !.config/fish
+!.config/flake8
 .config/fish/functions
 fishd.*
 !.config/alacritty
@@ -38,10 +39,15 @@ fishd.*
 !.vim/indent
 !.vim/ftplugin
 !.vim/filetype.vim
-!.vim/neocomplete.config.vim
+!.vim/UltiSnips
 
 tags
 TAGS
 .subversion
 /.cache
 *.retry
+.config/fish/completions/
+
+.netrwhist
+
+sentry-cli

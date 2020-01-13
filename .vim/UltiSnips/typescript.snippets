@@ -1,0 +1,23 @@
+snippet imr "import react"
+import * as React from 'react'
+endsnippet
+
+snippet rfn "react function component template"
+import * as React from 'react'
+
+interface ${2:`!v expand('%:t:r')`}Props {
+
+}
+
+export function ${1:`!v expand('%:t:r')`}({ }: ${2:`!v expand('%:t:r')`}Props) {
+  return <>$0</>
+}
+endsnippet
+
+snippet udi "useState"
+const dispatch = useDispatch()
+endsnippet
+
+snippet ust "useState"
+const [$0, set$0] = React.useState()
+endsnippet

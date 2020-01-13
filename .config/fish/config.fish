@@ -1,6 +1,10 @@
 # {{{ Env vars
 
-set -gx IS_MAC (test -e /Applications)
+if [ -e /Applications ]
+    set -gx IS_MAC 1
+else
+    set -gx IS_MAC 0
+end
 
 set -gx ANDROID_HOME /opt/android-sdk ^/dev/null
 
@@ -20,26 +24,36 @@ set -gx PATH \
             $HOME/.config/yarn/global/node_modules/.bin \
             $HOME/.local/bin \
             $HOME/.go/bin/ \
+            $HOME/go/bin/ \
             $HOME/bin \
             $HOME/.gem/ruby/2.4.0/bin \
             $HOME/.gem/ruby/2.5.0/bin \
             $HOME/.nvm/versions/node/v10.3.0/bin \
+            $HOME/.nvm/versions/node/v10.13.0/bin \
             $HOME/.config/composer/vendor/bin \
             /usr/local/bin \
             /bin \
-            $ANDROID_HOME/tools\
-            $ANDROID_HOME/platform-tools\
+            $ANDROID_HOME/tools \
+            $ANDROID_HOME/platform-tools \
+            $HOME/.cargo/bin \
             $PATH ^/dev/null
 set -gx EDITOR vim
 set -gx VISUAL vim
 set -gx CHROME_BIN chromium
 
 set -gx PIPENV_VENV_IN_PROJECT 1
-set -gx AWS_DEFAULT_PROFILE acro5piano
+# set -gx AWS_DEFAULT_PROFILE acro5piano
 
 set -gx LANG en_US.UTF-8
 set -gx LC_ALL en_US.UTF-8
 set -gx LC_CTYPE en_US.UTF-8
+
+set -gx LDFLAGS "-L/usr/local/opt/readline/lib"
+set -gx CPPFLAGS "-I/usr/local/opt/readline/include"
+set -gx PKG_CONFIG_PATH "/usr/local/opt/readline/lib/pkgconfig"
+
+set -gx GRADLE_OPTS '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+set -gx JAVA_OPTS "-Xms512m -Xmx1024m"
 
 # }}}
 
@@ -126,14 +140,6 @@ end
 
 function diffc
     colordiff -U3 $argv
-end
-
-function git-open
-    git remote -v | perl -pe 's/[ ]/\n/g' | head -1 | perl -pe 's;^.+git@(.+)\.git;https://\1;g' | xargs chromium
-end
-
-function dot
-    cd ~/.dotfiles
 end
 
 function seek
@@ -224,8 +230,43 @@ function gcamp
     and git pushthis
 end
 
+function gtagp
+    git cam "$argv[1]"
+    git tag "$argv[2]"
+    git pushthis
+    git push origin "$argv[2]"
+end
+
 function tmsp
     tmux swap-window -t $argv[1]
+end
+
+function merge
+    set repo (pwd | perl -pe 's#.+github.com/##')
+
+    curl \
+        -XPUT \
+        -H "Authorization: token $GITHUB_TOKEN" \
+        https://api.github.com/repos/$repo/pulls/$argv[1]/merge
+end
+
+function clear-branchs
+    echo 'removing:'
+    git branch | grep -v \* | grep -v master | grep -v develop | perl -pe 's/^/  /'
+    echo
+    read res -n1 -P 'Continue? [Y/n]'
+    if [ res != 'Y' ]
+        return
+    end
+    # git branch | grep -v \* | grep -v master | grep -v develop |  xargs git branch -D
+end
+
+function memo
+    set dir $HOME/ghq/github.com/acro5piano/var/(date +%Y%m)
+    if [ ! -e $dir ]
+        mkdir $dir
+    end
+    nvim $dir/(date +%Y%m%d_%H%M%S).md
 end
 
 # }}}
@@ -247,7 +288,6 @@ alias bc='bc -l'
 alias ccat='pygmentize -g'
 alias dc='docker-compose'
 alias grep='grep --color=auto'
-alias jq='jq -C'
 alias la='ls -A'
 alias less='less -R'
 alias ll='ls -alh'
@@ -272,16 +312,20 @@ alias avg='perl -nale \'$sum += $_; END { print $sum / $.}\''
 
 alias csv='column -ts ,'
 alias tsv='column -ts \t'
+alias tmc='tmux clear-history'
+
+alias devtomaster="open (hub pull-request -h develop -b master -m 'production deploy')"
 
 # }}}
 
 # {{{ init
 
 [ -e  ~/.traimmu_dotfiles/aliases ]; and source ~/.traimmu_dotfiles/aliases
+[ -e  ~/.secret.env ]; and source ~/.secret.env
 
-if [ $IS_MAC ]
-    pgrep xremap > /dev/null; or bash -c 'nohup xremap ~/.xremap 2>&1 >/dev/null &'
-end
+# if [ $IS_MAC -eq 0 ]
+#     pgrep xremap > /dev/null; or bash -c 'nohup xremap ~/.xremap 2>&1 >/dev/null &'
+# end
 
 if [ "$TERM" = 'xterm-256color' ]
     if pgrep tmux > /dev/null
@@ -295,7 +339,7 @@ if [ -e /etc/arch-release ]
     sudo sysctl -p > /dev/null &
 end
 
-bass source ~/.gvm/scripts/gvm
+# bass source ~/.gvm/scripts/gvm
 
 # }}}
 
